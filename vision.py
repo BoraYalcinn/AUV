@@ -20,7 +20,7 @@ class TopCameraVision(BaseVision):
         self.min_area = 800
 
     # ---------------------------------------------------
-    # 1️⃣ Threshold
+    #  Threshold
     # ---------------------------------------------------
     def threshold_strip(self, frame):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -33,7 +33,7 @@ class TopCameraVision(BaseVision):
         return mask
 
     # ---------------------------------------------------
-    # 2️⃣ Largest Contour
+    #  Largest Contour
     # ---------------------------------------------------
     def get_largest_contour(self, mask):
         contours, _ = cv2.findContours(
@@ -53,7 +53,7 @@ class TopCameraVision(BaseVision):
         return largest
 
     # ---------------------------------------------------
-    # 3️⃣ Centroid
+    #  Centroid
     # ---------------------------------------------------
     def compute_centroid(self, contour):
         M = cv2.moments(contour)
@@ -65,7 +65,7 @@ class TopCameraVision(BaseVision):
         return cx, cy
 
     # ---------------------------------------------------
-    # 4️⃣ PCA ile açı hesabı
+    #  PCA ile açı hesabı
     # ---------------------------------------------------
     def compute_angle(self, contour):
         data_pts = np.float32(contour.reshape(-1, 2))
@@ -77,12 +77,11 @@ class TopCameraVision(BaseVision):
         return angle
 
     # ---------------------------------------------------
-    # 5️⃣ Turn Detection (Sağ / Sol ayrımı)
+    #  Turn Detection (Sağ / Sol ayrımı)
     # ---------------------------------------------------
     def detect_turn(self, contour, frame):
         x, y, w, h = cv2.boundingRect(contour)
 
-        # Yatay baskınlık kontrolü
         if w > h * 1.2:
 
             centroid = self.compute_centroid(contour)
@@ -100,7 +99,7 @@ class TopCameraVision(BaseVision):
         return False, None
 
     # ---------------------------------------------------
-    # 6️⃣ Ana process fonksiyonu
+    #  Ana process fonksiyonu
     # ---------------------------------------------------
     def process(self, frame):
 
@@ -129,14 +128,14 @@ class TopCameraVision(BaseVision):
         cx, cy = centroid
         frame_center = frame.shape[1] // 2
 
-        # Normalize edilmiş hata (-1 ile +1 arası)
+
         center_error = (cx - frame_center) / frame_center
 
         angle = self.compute_angle(contour)
 
         turn_flag, direction = self.detect_turn(contour, frame)
 
-        # Debug çizimleri
+
         cv2.circle(frame, (cx, cy), 5, (0, 0, 255), -1)
         cv2.line(frame, (frame_center, 0), (frame_center, frame.shape[0]), (255, 0, 0), 2)
 

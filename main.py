@@ -58,7 +58,7 @@ def main():
             2
         )
 
-        # Mode bilgisini yazdır
+
         cv2.putText(
             frame,
             f"MODE: {action['mode']}",
@@ -71,7 +71,7 @@ def main():
 
         cv2.imshow("Frame", frame)
 
-        # ESC ile çıkış
+
         key = cv2.waitKey(1) & 0xFF
         if key == 27:
             print("ESC pressed. Exiting...")

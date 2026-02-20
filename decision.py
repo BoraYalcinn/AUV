@@ -11,7 +11,7 @@ class DecisionMaker:
 
     def update(self, vision_data):
 
-        # 1️⃣ Çizgi yoksa SEARCH
+        # 1Çizgi yoksa SEARCH
         if not vision_data["line_found"]:
             self.state = "SEARCH"
 
@@ -21,7 +21,7 @@ class DecisionMaker:
                 "speed": 0
             }
 
-        # 2️⃣ Turn varsa sağ/sol ayrımı
+        # Turn varsa sağ/sol ayrımı
         if vision_data["turn_detected"]:
 
             if vision_data["turn_direction"] == "LEFT":
@@ -42,7 +42,7 @@ class DecisionMaker:
                     "speed": 30
                 }
 
-        # 3️⃣ Normal takip modu
+        # Normal takip modu
         self.state = "FOLLOW"
 
         error = vision_data["center_error"]
