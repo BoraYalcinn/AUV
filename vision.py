@@ -13,28 +13,24 @@ class BaseVision(ABC):
 class TopCameraVision(BaseVision):
 
     def __init__(self):
-        # Siyah şerit için HSV aralığı (gerekirse ayarlarsın)
+        # --- DEĞİŞTİRİLDİ: Threshold sıkılaştırıldı ---
         self.lower = np.array([0, 0, 0])
-        self.upper = np.array([180, 255, 60])
+        self.upper = np.array([180, 255, 50])
 
-        self.min_area = 800
+        self.min_area = 1000  # --- DEĞİŞTİRİLDİ: 800 → 1000 ---
 
-    # ---------------------------------------------------
-    #  Threshold
-    # ---------------------------------------------------
     def threshold_strip(self, frame):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, self.lower, self.upper)
 
-        # Morphology (boşluk kapatma)
         kernel = np.ones((5, 5), np.uint8)
+
+        # --- DEĞİŞTİRİLDİ: Close + Open ---
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
         return mask
 
-    # ---------------------------------------------------
-    #  Largest Contour
-    # ---------------------------------------------------
     def get_largest_contour(self, mask):
         contours, _ = cv2.findContours(
             mask,
@@ -52,9 +48,6 @@ class TopCameraVision(BaseVision):
 
         return largest
 
-    # ---------------------------------------------------
-    #  Centroid
-    # ---------------------------------------------------
     def compute_centroid(self, contour):
         M = cv2.moments(contour)
         if M["m00"] == 0:
@@ -64,9 +57,6 @@ class TopCameraVision(BaseVision):
         cy = int(M["m01"] / M["m00"])
         return cx, cy
 
-    # ---------------------------------------------------
-    #  PCA ile açı hesabı
-    # ---------------------------------------------------
     def compute_angle(self, contour):
         data_pts = np.float32(contour.reshape(-1, 2))
         mean, eigenvectors = cv2.PCACompute(data_pts, mean=None)
@@ -74,15 +64,19 @@ class TopCameraVision(BaseVision):
         vx, vy = eigenvectors[0]
         angle = math.degrees(math.atan2(vy, vx))
 
+        # --- DEĞİŞTİRİLDİ: -90 / +90 normalize ---
+        if angle > 90:
+            angle -= 180
+        if angle < -90:
+            angle += 180
+
         return angle
 
-    # ---------------------------------------------------
-    #  Turn Detection (Sağ / Sol ayrımı)
-    # ---------------------------------------------------
     def detect_turn(self, contour, frame):
         x, y, w, h = cv2.boundingRect(contour)
 
-        if w > h * 1.2:
+        # --- DEĞİŞTİRİLDİ: oran arttırıldı (1.2 → 1.5) ---
+        if w > h * 1.5:
 
             centroid = self.compute_centroid(contour)
             if centroid is None:
@@ -98,9 +92,6 @@ class TopCameraVision(BaseVision):
 
         return False, None
 
-    # ---------------------------------------------------
-    #  Ana process fonksiyonu
-    # ---------------------------------------------------
     def process(self, frame):
 
         mask = self.threshold_strip(frame)
@@ -128,13 +119,9 @@ class TopCameraVision(BaseVision):
         cx, cy = centroid
         frame_center = frame.shape[1] // 2
 
-
         center_error = (cx - frame_center) / frame_center
-
         angle = self.compute_angle(contour)
-
         turn_flag, direction = self.detect_turn(contour, frame)
-
 
         cv2.circle(frame, (cx, cy), 5, (0, 0, 255), -1)
         cv2.line(frame, (frame_center, 0), (frame_center, frame.shape[0]), (255, 0, 0), 2)

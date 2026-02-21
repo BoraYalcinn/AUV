@@ -14,8 +14,11 @@ def main():
         print("Kamera açılamadı!")
         return
 
+    # VISION
     vision = TopCameraVision()
+    # DECISION
     decision = DecisionMaker()
+    # CONTROL
     controller = PrintController()
 
     prev_time = time.time()
@@ -23,58 +26,35 @@ def main():
     while True:
         ret, frame = cap.read()
         if not ret:
-            print("Frame alınamadı!")
             break
 
-        # ---------------------------
-        # VISION
-        # ---------------------------
         vision_data = vision.process(frame)
-
-        # ---------------------------
-        # DECISION
-        # ---------------------------
         action = decision.update(vision_data)
-
-        # ---------------------------
-        # CONTROL
-        # ---------------------------
         controller.execute(action)
 
-        # ---------------------------
-        # FPS HESABI
-        # ---------------------------
         current_time = time.time()
         fps = 1 / (current_time - prev_time)
         prev_time = current_time
 
-        cv2.putText(
-            frame,
-            f"FPS: {int(fps)}",
-            (10, 30),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.7,
-            (0, 255, 0),
-            2
-        )
+        # --- DEBUG OVERLAY ---
+        cv2.putText(frame, f"FPS: {int(fps)}", (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
+        cv2.putText(frame, f"Mode: {action['mode']}", (10, 55),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
 
-        cv2.putText(
-            frame,
-            f"MODE: {action['mode']}",
-            (10, 60),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.7,
-            (0, 255, 255),
-            2
-        )
+        cv2.putText(frame, f"Angle: {round(vision_data['angle'],2)}", (10, 80),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+
+        cv2.putText(frame, f"Error: {round(vision_data['center_error'],3)}", (10, 105),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 200, 0), 2)
+
+        cv2.putText(frame, action["debug"], (10, 130),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 200, 255), 2)
 
         cv2.imshow("Frame", frame)
 
-
-        key = cv2.waitKey(1) & 0xFF
-        if key == 27:
-            print("ESC pressed. Exiting...")
+        if cv2.waitKey(1) & 0xFF == 27:
             break
 
     cap.release()

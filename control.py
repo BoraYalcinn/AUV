@@ -15,4 +15,5 @@ class PrintController(BaseController):
         print(f"STATE      : {action['mode']}")
         print(f"STEERING   : {round(action['steering'], 2)}")
         print(f"SPEED      : {action['speed']}")
+        print(f"INFO       : {action['debug']}")
         print("-" * 35)
